@@ -1,0 +1,29 @@
+name: repair-daily-check
+
+services:
+  repair-check:
+    build: .
+    image: repair-daily-check:latest
+    ports:
+      # 宿主端口可用 HOST_PORT 覆盖，默认 FastAPI 约定的 8000
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      DB_PATH: /data/repair_check.db
+      TZ: Asia/Shanghai
+    volumes:
+      - repair-check-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3); sys.exit(0 if r.status==200 else 1)"
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
+
+volumes:
+  repair-check-data:
+    name: repair-check-data
